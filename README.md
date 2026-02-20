@@ -36,6 +36,10 @@ ArchiveBase automatically archives old records to external storage, keeping your
 
 ## 📦 Installation
 
+**⚠️ Note:** You may see TypeScript errors during compilation. These are type-level incompatibilities between React 18 and the Airtable Blocks SDK. The extension works perfectly at runtime — just ignore the TS errors or use `block run` which handles bundling automatically.
+
+**📘 See [SETUP_GUIDE.md](./SETUP_GUIDE.md) for detailed instructions and troubleshooting.**
+
 ### Prerequisites
 
 - Node.js 16+ and npm
