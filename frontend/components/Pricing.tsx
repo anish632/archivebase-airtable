@@ -1,11 +1,30 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Box, Text, Heading, Button, Icon } from '@airtable/blocks/ui';
+import { createCheckout } from '../utils/api';
 
 interface PricingProps {
   currentTier: 'free' | 'pro' | 'team';
+  baseId: string;
 }
 
-export const Pricing: React.FC<PricingProps> = ({ currentTier }) => {
+export const Pricing: React.FC<PricingProps> = ({ currentTier, baseId }) => {
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleUpgrade = async (tier: 'pro' | 'team') => {
+    setIsLoading(true);
+    try {
+      const res = await createCheckout(baseId, tier);
+      if (res.success && res.checkoutUrl) {
+        window.open(res.checkoutUrl, '_blank');
+      } else {
+        alert(res.error || 'Failed to create checkout. Please try again.');
+      }
+    } catch (e) {
+      alert('Failed to connect to billing service. Please try again later.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
   const tiers = [
     {
       name: 'Free',
@@ -153,11 +172,14 @@ export const Pricing: React.FC<PricingProps> = ({ currentTier }) => {
                   <Button
                     variant={tier.popular ? 'primary' : 'default'}
                     width="100%"
+                    disabled={isLoading}
                     onClick={() => {
-                      alert('Billing integration via Lemon Squeezy coming soon!');
+                      if (tier.tier === 'pro' || tier.tier === 'team') {
+                        handleUpgrade(tier.tier);
+                      }
                     }}
                   >
-                    {tier.tier === 'free' ? 'Downgrade' : 'Upgrade'}
+                    {isLoading ? 'Loading...' : tier.tier === 'free' ? 'Downgrade' : 'Upgrade'}
                   </Button>
                 )}
               </Box>

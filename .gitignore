@@ -25,6 +25,7 @@ Thumbs.db
 
 # Airtable
 .block/
+.tmp/
 
 # Logs
 *.log

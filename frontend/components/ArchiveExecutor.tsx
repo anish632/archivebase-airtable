@@ -13,15 +13,18 @@ import { useBase, useRecords } from '@airtable/blocks/ui';
 import { ArchiveRule } from '../types';
 import { getRecordsMatchingRule } from '../utils/recordFilter';
 import { exportToCSV, downloadCSV, getArchiveFilename } from '../utils/csvExport';
+import { logArchiveOperation } from '../utils/api';
 
 interface ArchiveExecutorProps {
   rules: ArchiveRule[];
   onArchiveComplete: (recordCount: number) => void;
+  baseId: string;
 }
 
 export const ArchiveExecutor: React.FC<ArchiveExecutorProps> = ({
   rules,
   onArchiveComplete,
+  baseId,
 }) => {
   const base = useBase();
   const [selectedTableId, setSelectedTableId] = useState<string>('');
@@ -100,6 +103,22 @@ export const ArchiveExecutor: React.FC<ArchiveExecutorProps> = ({
         
         const progressPercent = 75 + (25 * (i + batchSize) / recordIds.length);
         setProgress(Math.min(progressPercent, 100));
+      }
+
+      setProgress(95);
+
+      // Log to backend
+      try {
+        const rule = rules.find(r => r.id === selectedRuleId)!;
+        await logArchiveOperation({
+          baseId,
+          tableId: selectedTableId,
+          recordCount: matchingRecords.length,
+          ruleId: rule.id,
+          ruleName: rule.name,
+        });
+      } catch (e) {
+        console.warn('Failed to log archive to backend:', e);
       }
 
       setProgress(100);

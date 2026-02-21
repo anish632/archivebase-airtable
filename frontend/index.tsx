@@ -14,6 +14,7 @@ import { Dashboard } from './components/Dashboard';
 import { ArchiveRules } from './components/ArchiveRules';
 import { ArchiveExecutor } from './components/ArchiveExecutor';
 import { Pricing } from './components/Pricing';
+import { getLicense } from './utils/api';
 
 type TabName = 'dashboard' | 'rules' | 'archive' | 'pricing';
 
@@ -29,7 +30,7 @@ function ArchiveBaseApp() {
     recordsSaved: 0,
     lastArchiveDate: undefined,
   });
-  const [currentTier] = useState<'free' | 'pro' | 'team'>('free');
+  const [currentTier, setCurrentTier] = useState<'free' | 'pro' | 'team'>('free');
 
   // Load rules from global config on mount
   useEffect(() => {
@@ -48,6 +49,17 @@ function ArchiveBaseApp() {
       });
     }
   }, [globalConfig]);
+
+  // Fetch license from backend
+  useEffect(() => {
+    getLicense(base.id).then((res) => {
+      if (res.success && res.license) {
+        setCurrentTier(res.license.tier);
+      }
+    }).catch(() => {
+      // Default to free on error
+    });
+  }, [base.id]);
 
   // Calculate total records across all tables
   useEffect(() => {
@@ -190,11 +202,12 @@ function ArchiveBaseApp() {
           <ArchiveExecutor
             rules={rules}
             onArchiveComplete={handleArchiveComplete}
+            baseId={base.id}
           />
         )}
         
         {activeTab === 'pricing' && (
-          <Pricing currentTier={currentTier} />
+          <Pricing currentTier={currentTier} baseId={base.id} />
         )}
       </Box>
 
