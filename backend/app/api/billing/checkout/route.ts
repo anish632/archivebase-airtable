@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
 import { corsResponse, jsonResponse } from '@/lib/cors';
+import { requireAuth } from '@/lib/auth';
 import { createCheckout } from '@/lib/lemonsqueezy';
 
 export async function OPTIONS() {
@@ -7,6 +8,9 @@ export async function OPTIONS() {
 }
 
 export async function POST(req: NextRequest) {
+  const authError = requireAuth(req);
+  if (authError) return authError;
+
   try {
     const { tier, baseId } = await req.json();
 

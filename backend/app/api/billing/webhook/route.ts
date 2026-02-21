@@ -9,10 +9,9 @@ export async function POST(req: NextRequest) {
     const signature = req.headers.get('x-signature') || '';
     const secret = process.env.LEMONSQUEEZY_WEBHOOK_SECRET || '';
 
-    // Verify signature in production
-    if (secret && signature) {
-      const valid = verifyWebhookSignature(rawBody, signature, secret);
-      if (!valid) {
+    // Verify signature — if secret is configured, require a valid signature
+    if (secret) {
+      if (!signature || !verifyWebhookSignature(rawBody, signature, secret)) {
         return jsonResponse({ success: false, error: 'Invalid signature' }, 401);
       }
     }
@@ -31,7 +30,6 @@ export async function POST(req: NextRequest) {
     switch (eventName) {
       case 'subscription_created':
       case 'subscription_updated': {
-        const tierMap: Record<string, 'pro' | 'team'> = {};
         // Determine tier from variant name or product
         const variantName = (attrs.variant_name || '').toLowerCase();
         const tier = variantName.includes('team') ? 'team' : 'pro';

@@ -1,15 +1,12 @@
 /**
- * Simple in-memory + file-based storage for MVP.
- * Replace with a real database (Supabase, Planetscale, etc.) for production.
- * 
- * For now we use Vercel KV or just keep archives as JSON blobs.
- * The extension primarily exports CSVs client-side, so server storage
- * is mainly for:
- * - Subscription/license tracking per base
- * - Archive metadata (what was archived, when)
+ * WARNING: In-memory storage — all data is lost on every Vercel cold start or redeploy.
+ * This means paid subscribers will temporarily appear as "free" until the next webhook event.
+ *
+ * Before going to production, replace these Maps with a persistent store
+ * (e.g., Vercel KV, Supabase, PlanetScale) so that subscription state survives restarts.
  */
 
-// In-memory store (resets on cold start — fine for MVP with Lemon Squeezy as source of truth)
+// In-memory store (resets on cold start)
 const subscriptions = new Map<string, {
   tier: 'free' | 'pro' | 'team';
   status: 'active' | 'canceled' | 'expired';

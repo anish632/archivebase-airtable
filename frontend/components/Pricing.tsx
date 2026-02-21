@@ -208,7 +208,7 @@ export const Pricing: React.FC<PricingProps> = ({ currentTier, baseId }) => {
           • <strong>Compliance:</strong> Automated retention policies for regulatory requirements
         </Text>
         <Text size="small">
-          • <strong>Recovery:</strong> Archived data is safely stored and can be restored anytime
+          • <strong>Safety:</strong> Records are exported to CSV before deletion so you always have a backup
         </Text>
       </Box>
     </Box>

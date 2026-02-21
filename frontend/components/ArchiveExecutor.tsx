@@ -9,7 +9,7 @@ import {
   ProgressBar,
   Icon,
 } from '@airtable/blocks/ui';
-import { useBase, useRecords } from '@airtable/blocks/ui';
+import { useBase } from '@airtable/blocks/ui';
 import { ArchiveRule } from '../types';
 import { getRecordsMatchingRule } from '../utils/recordFilter';
 import { exportToCSV, downloadCSV, getArchiveFilename } from '../utils/csvExport';
@@ -35,7 +35,7 @@ export const ArchiveExecutor: React.FC<ArchiveExecutorProps> = ({
   const [progress, setProgress] = useState(0);
 
   const activeRules = rules.filter(r => r.enabled);
-  const selectedTable = selectedTableId 
+  const selectedTable = selectedTableId
     ? base.getTableByIdIfExists(selectedTableId)
     : null;
 
@@ -75,58 +75,58 @@ export const ArchiveExecutor: React.FC<ArchiveExecutorProps> = ({
       const rule = rules.find(r => r.id === selectedRuleId);
       if (!rule) throw new Error('Rule not found');
 
-      // Get matching records
+      // Get matching records (data is extracted before query is unloaded)
       const matchingRecords = await getRecordsMatchingRule(selectedTable, rule);
-      
+
       if (matchingRecords.length === 0) {
         alert('No records match this rule.');
         return;
       }
 
+      // Check limits with backend BEFORE deleting anything
+      setProgress(10);
+      const limitCheck = await logArchiveOperation({
+        baseId,
+        tableId: selectedTableId,
+        recordCount: matchingRecords.length,
+        ruleId: rule.id,
+        ruleName: rule.name,
+      });
+
+      if (!limitCheck.success) {
+        alert(limitCheck.error || 'Archive limit reached. Upgrade your plan for more.');
+        return;
+      }
+
       // Export to CSV
       setProgress(25);
-      const csvContent = exportToCSV(matchingRecords, selectedTable.name);
+      const fieldNames = selectedTable.fields.map(f => f.name);
+      const csvContent = exportToCSV(matchingRecords, fieldNames);
       const filename = getArchiveFilename(selectedTable.name);
-      
+
       setProgress(50);
       downloadCSV(csvContent, filename);
 
       // Delete records from Airtable
-      setProgress(75);
+      setProgress(60);
       const recordIds = matchingRecords.map(r => r.id);
-      
+
       // Delete in batches of 50 (Airtable API limit)
       const batchSize = 50;
       for (let i = 0; i < recordIds.length; i += batchSize) {
         const batch = recordIds.slice(i, i + batchSize);
         await selectedTable.deleteRecordsAsync(batch);
-        
-        const progressPercent = 75 + (25 * (i + batchSize) / recordIds.length);
-        setProgress(Math.min(progressPercent, 100));
-      }
 
-      setProgress(95);
-
-      // Log to backend
-      try {
-        const rule = rules.find(r => r.id === selectedRuleId)!;
-        await logArchiveOperation({
-          baseId,
-          tableId: selectedTableId,
-          recordCount: matchingRecords.length,
-          ruleId: rule.id,
-          ruleName: rule.name,
-        });
-      } catch (e) {
-        console.warn('Failed to log archive to backend:', e);
+        const progressPercent = 60 + (35 * (i + batchSize) / recordIds.length);
+        setProgress(Math.min(progressPercent, 95));
       }
 
       setProgress(100);
       onArchiveComplete(matchingRecords.length);
-      
+
       alert(`Successfully archived ${matchingRecords.length} records!`);
       setMatchingCount(null);
-      
+
     } catch (error) {
       console.error('Error archiving records:', error);
       alert('Error archiving records. Check console for details.');
@@ -165,7 +165,7 @@ export const ArchiveExecutor: React.FC<ArchiveExecutorProps> = ({
             <Select
               value={selectedTableId}
               onChange={(value) => {
-                setSelectedTableId(value);
+                setSelectedTableId(value as string);
                 setMatchingCount(null);
               }}
               options={[
@@ -179,7 +179,7 @@ export const ArchiveExecutor: React.FC<ArchiveExecutorProps> = ({
             <Select
               value={selectedRuleId}
               onChange={(value) => {
-                setSelectedRuleId(value);
+                setSelectedRuleId(value as string);
                 setMatchingCount(null);
               }}
               options={[
@@ -210,10 +210,10 @@ export const ArchiveExecutor: React.FC<ArchiveExecutorProps> = ({
               backgroundColor="lightGray1"
             >
               <Box display="flex" alignItems="center" marginBottom={2}>
-                <Icon 
-                  name="info" 
-                  size={24} 
-                  fillColor={matchingCount > 0 ? 'blue' : 'gray'} 
+                <Icon
+                  name="info"
+                  size={24}
+                  fillColor={matchingCount > 0 ? 'blue' : 'gray'}
                 />
                 <Heading size="small" marginLeft={2}>
                   Scan Results

@@ -57,8 +57,12 @@ export async function getSubscription(subscriptionId: string) {
 }
 
 export function verifyWebhookSignature(payload: string, signature: string, secret: string): boolean {
-  const crypto = require('crypto');
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const crypto = require('crypto') as typeof import('crypto');
   const hmac = crypto.createHmac('sha256', secret);
   const digest = hmac.update(payload).digest('hex');
-  return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(digest));
+  const sigBuf = Buffer.from(signature);
+  const digestBuf = Buffer.from(digest);
+  if (sigBuf.length !== digestBuf.length) return false;
+  return crypto.timingSafeEqual(sigBuf, digestBuf);
 }

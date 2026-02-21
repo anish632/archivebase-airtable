@@ -1,68 +1,52 @@
-import { Record as AirtableRecord, FieldType } from '@airtable/blocks/models';
+import { MatchedRecord } from './recordFilter';
 
-export function exportToCSV(records: AirtableRecord[], tableName: string): string {
+export function exportToCSV(records: MatchedRecord[], fieldNames: string[]): string {
   if (records.length === 0) return '';
 
-  const table = records[0].parentTable;
-  const fields = table.fields;
-
   // Create header row
-  const headers = ['Record ID', ...fields.map(f => f.name)];
-  
-  // Create data rows
+  const headers = ['Record ID', ...fieldNames];
+
+  // Create data rows from pre-extracted cell values
   const rows = records.map(record => {
-    const row = [record.id];
-    
-    fields.forEach(field => {
-      const cellValue = record.getCellValue(field);
-      row.push(formatCellValue(cellValue, field.type));
+    const row: string[] = [record.id];
+
+    fieldNames.forEach(fieldName => {
+      const value = record.cellValues[fieldName];
+      row.push(formatCellValue(value));
     });
-    
+
     return row;
   });
 
   // Combine headers and rows
   const allRows = [headers, ...rows];
-  
+
   // Convert to CSV string
-  return allRows.map(row => 
+  return allRows.map(row =>
     row.map(cell => escapeCsvValue(String(cell ?? ''))).join(',')
   ).join('\n');
 }
 
-function formatCellValue(value: any, fieldType: FieldType): string {
+function formatCellValue(value: unknown): string {
   if (value === null || value === undefined) return '';
-  
-  switch (fieldType) {
-    case FieldType.MULTIPLE_ATTACHMENTS:
-      return Array.isArray(value) 
-        ? value.map((a: any) => a.url || a.filename).join('; ')
-        : '';
-    
-    case FieldType.MULTIPLE_RECORD_LINKS:
-    case FieldType.MULTIPLE_LOOKUP_VALUES:
-    case FieldType.MULTIPLE_SELECTS:
-    case FieldType.MULTIPLE_COLLABORATORS:
-      return Array.isArray(value) 
-        ? value.map((v: any) => v.name || v.id || String(v)).join('; ')
-        : '';
-    
-    case FieldType.SINGLE_COLLABORATOR:
-      return value.name || value.email || '';
-    
-    case FieldType.DATE:
-    case FieldType.DATE_TIME:
-      return value;
-    
-    case FieldType.CHECKBOX:
-      return value ? 'true' : 'false';
-    
-    default:
-      if (typeof value === 'object') {
-        return JSON.stringify(value);
-      }
-      return String(value);
+
+  if (Array.isArray(value)) {
+    return value
+      .map((v: any) => v.name || v.url || v.filename || v.id || String(v))
+      .join('; ');
   }
+
+  if (typeof value === 'object' && value !== null) {
+    if ('name' in value) return (value as any).name;
+    if ('email' in value) return (value as any).email;
+    return JSON.stringify(value);
+  }
+
+  if (typeof value === 'boolean') {
+    return value ? 'true' : 'false';
+  }
+
+  return String(value);
 }
 
 function escapeCsvValue(value: string): string {
@@ -75,18 +59,22 @@ function escapeCsvValue(value: string): string {
 
 export function downloadCSV(csvContent: string, filename: string) {
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-  const link = document.createElement('a');
   const url = URL.createObjectURL(blob);
-  
-  link.setAttribute('href', url);
-  link.setAttribute('download', filename);
-  link.style.visibility = 'hidden';
-  
+
+  // Use window.open as a fallback-safe approach that works in iframes.
+  // The <a download> trick can be blocked in sandboxed extension iframes.
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  link.style.display = 'none';
   document.body.appendChild(link);
   link.click();
-  document.body.removeChild(link);
-  
-  URL.revokeObjectURL(url);
+
+  // Cleanup after a short delay to ensure the browser picks up the download
+  setTimeout(() => {
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }, 100);
 }
 
 export function getArchiveFilename(tableName: string): string {

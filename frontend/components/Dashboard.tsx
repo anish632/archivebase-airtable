@@ -5,12 +5,13 @@ import { ArchiveStats } from '../types';
 interface DashboardProps {
   stats: ArchiveStats;
   currentTier: 'free' | 'pro' | 'team';
+  monthlyArchiveCount: number;
 }
 
-export const Dashboard: React.FC<DashboardProps> = ({ stats, currentTier }) => {
+export const Dashboard: React.FC<DashboardProps> = ({ stats, currentTier, monthlyArchiveCount }) => {
   const recordLimit = currentTier === 'free' ? 500 : null;
-  const usagePercentage = recordLimit 
-    ? Math.min((stats.archivedRecords / recordLimit) * 100, 100)
+  const usagePercentage = recordLimit
+    ? Math.min((monthlyArchiveCount / recordLimit) * 100, 100)
     : 0;
 
   return (
@@ -33,7 +34,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ stats, currentTier }) => {
         {currentTier === 'free' && (
           <Box marginTop={2}>
             <Text size="small">
-              {stats.archivedRecords} / {recordLimit} records archived this month
+              {monthlyArchiveCount} / {recordLimit} records archived this month
             </Text>
             <Box 
               height="8px" 

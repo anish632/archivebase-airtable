@@ -1,30 +1,44 @@
 import { Record as AirtableRecord, Table } from '@airtable/blocks/models';
 import { ArchiveRule, AgeConfig, StatusConfig } from '../types';
 
+export interface MatchedRecord {
+  id: string;
+  name: string;
+  cellValues: Record<string, unknown>;
+}
+
 export async function getRecordsMatchingRule(
   table: Table,
   rule: ArchiveRule
-): Promise<AirtableRecord[]> {
+): Promise<MatchedRecord[]> {
   const query = await table.selectRecordsAsync();
   const allRecords = query.records;
-  
-  const matchingRecords = allRecords.filter(record => 
-    doesRecordMatchRule(record, rule)
-  );
-  
-  query.unload();
+
+  // Extract data from matching records BEFORE unloading the query,
+  // because unloading invalidates record references.
+  const matchingRecords = allRecords
+    .filter(record => doesRecordMatchRule(record, table, rule))
+    .map(record => ({
+      id: record.id,
+      name: record.name,
+      cellValues: Object.fromEntries(
+        table.fields.map(field => [field.name, record.getCellValue(field)])
+      ),
+    }));
+
+  (query as any).unload();
   return matchingRecords;
 }
 
-function doesRecordMatchRule(record: AirtableRecord, rule: ArchiveRule): boolean {
+function doesRecordMatchRule(record: AirtableRecord, table: Table, rule: ArchiveRule): boolean {
   if (!rule.enabled) return false;
-  
+
   switch (rule.type) {
     case 'age':
-      return matchesAgeRule(record, rule.config as AgeConfig);
-    
+      return matchesAgeRule(record, table, rule.config as AgeConfig);
+
     case 'status':
-      return matchesStatusRule(record, rule.config as StatusConfig);
+      return matchesStatusRule(record, table, rule.config as StatusConfig);
     
     case 'custom':
       // Custom formula filtering would require server-side evaluation
@@ -36,9 +50,9 @@ function doesRecordMatchRule(record: AirtableRecord, rule: ArchiveRule): boolean
   }
 }
 
-function matchesAgeRule(record: AirtableRecord, config: AgeConfig): boolean {
+function matchesAgeRule(record: AirtableRecord, table: Table, config: AgeConfig): boolean {
   try {
-    const field = record.parentTable.getFieldByNameIfExists(config.field);
+    const field = table.getFieldByNameIfExists(config.field);
     if (!field) return false;
     
     const cellValue = record.getCellValue(field);
@@ -57,9 +71,9 @@ function matchesAgeRule(record: AirtableRecord, config: AgeConfig): boolean {
   }
 }
 
-function matchesStatusRule(record: AirtableRecord, config: StatusConfig): boolean {
+function matchesStatusRule(record: AirtableRecord, table: Table, config: StatusConfig): boolean {
   try {
-    const field = record.parentTable.getFieldByNameIfExists(config.field);
+    const field = table.getFieldByNameIfExists(config.field);
     if (!field) return false;
     
     const cellValue = record.getCellValue(field);

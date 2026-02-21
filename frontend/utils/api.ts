@@ -3,18 +3,35 @@
  * All calls go to the deployed backend (Vercel).
  */
 
-// This gets set at build/deploy time. For dev, use localhost.
+// These get set at build/deploy time. For dev, use localhost and leave key empty.
 const API_BASE = 'https://archivebase-backend.vercel.app';
+const API_KEY = (typeof process !== 'undefined' && process.env?.ARCHIVEBASE_API_KEY) || '';
 
 async function apiFetch(path: string, options: RequestInit = {}) {
   const url = `${API_BASE}${path}`;
+  const authHeaders: Record<string, string> = {};
+  if (API_KEY) {
+    authHeaders['Authorization'] = `Bearer ${API_KEY}`;
+  }
   const res = await fetch(url, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
+      ...authHeaders,
       ...options.headers,
     },
   });
+
+  if (!res.ok) {
+    let body: any;
+    try {
+      body = await res.json();
+    } catch {
+      body = { error: `HTTP ${res.status}: ${res.statusText}` };
+    }
+    return { success: false, ...body };
+  }
+
   return res.json();
 }
 

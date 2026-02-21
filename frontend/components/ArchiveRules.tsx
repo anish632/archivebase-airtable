@@ -138,7 +138,7 @@ const RuleCard: React.FC<RuleCardProps> = ({ rule, onUpdate, onDelete }) => {
           </Text>
           
           <Box marginTop={2}>
-            <Text size="xsmall" textColor="light">
+            <Text size="small" textColor="light">
               Type: {rule.type.toUpperCase()}
             </Text>
           </Box>
@@ -165,12 +165,13 @@ const AddRuleForm: React.FC<AddRuleFormProps> = ({ onSave, onCancel }) => {
   const base = useBase();
   const [name, setName] = useState('');
   const [type, setType] = useState<'age' | 'status'>('age');
+  const [selectedTableId, setSelectedTableId] = useState<string>(base.tables[0]?.id || '');
   const [field, setField] = useState('');
   const [olderThanDays, setOlderThanDays] = useState(30);
   const [statusValue, setStatusValue] = useState('');
 
-  const activeTable = base.tables[0]; // Use first table for now
-  
+  const activeTable = selectedTableId ? base.getTableByIdIfExists(selectedTableId) : null;
+
   const dateFields = activeTable ? getDateFieldNames(activeTable) : [];
   const selectFields = activeTable ? getSelectFieldNames(activeTable) : [];
 
@@ -202,7 +203,18 @@ const AddRuleForm: React.FC<AddRuleFormProps> = ({ onSave, onCancel }) => {
         Create New Archive Rule
       </Heading>
 
-      <FormField label="Rule Name">
+      <FormField label="Table">
+        <Select
+          value={selectedTableId}
+          onChange={(value) => {
+            setSelectedTableId(value as string);
+            setField('');
+          }}
+          options={base.tables.map(t => ({ value: t.id, label: t.name }))}
+        />
+      </FormField>
+
+      <FormField label="Rule Name" marginTop={2}>
         <Input
           value={name}
           onChange={(e) => setName(e.target.value)}
@@ -213,7 +225,7 @@ const AddRuleForm: React.FC<AddRuleFormProps> = ({ onSave, onCancel }) => {
       <FormField label="Rule Type" marginTop={2}>
         <Select
           value={type}
-          onChange={(value) => setType(value as 'age' | 'status')}
+          onChange={(value) => setType((value as string) as 'age' | 'status')}
           options={[
             { value: 'age', label: 'Age-based (archive old records)' },
             { value: 'status', label: 'Status-based (archive by field value)' },
@@ -226,7 +238,7 @@ const AddRuleForm: React.FC<AddRuleFormProps> = ({ onSave, onCancel }) => {
           <FormField label="Date Field" marginTop={2}>
             <Select
               value={field}
-              onChange={(value) => setField(value)}
+              onChange={(value) => setField(value as string)}
               options={dateFields.map(f => ({ value: f, label: f }))}
             />
           </FormField>
@@ -246,7 +258,7 @@ const AddRuleForm: React.FC<AddRuleFormProps> = ({ onSave, onCancel }) => {
           <FormField label="Status Field" marginTop={2}>
             <Select
               value={field}
-              onChange={(value) => setField(value)}
+              onChange={(value) => setField(value as string)}
               options={selectFields.map(f => ({ value: f, label: f }))}
             />
           </FormField>
