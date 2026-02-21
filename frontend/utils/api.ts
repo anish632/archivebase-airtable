@@ -4,7 +4,7 @@
  */
 
 // This gets set at build/deploy time. For dev, use localhost.
-const API_BASE = 'https://archivebase-api.vercel.app';
+const API_BASE = 'https://archivebase-backend.vercel.app';
 
 async function apiFetch(path: string, options: RequestInit = {}) {
   const url = `${API_BASE}${path}`;
