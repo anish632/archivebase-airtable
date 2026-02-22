@@ -6,7 +6,6 @@ import {
   Box,
   ViewportConstraint,
   Button,
-  Icon,
 } from '@airtable/blocks/ui';
 import { ArchiveRule, ArchiveStats } from './types';
 import { Dashboard } from './components/Dashboard';
@@ -75,7 +74,7 @@ function ArchiveBaseApp() {
       for (const table of base.tables) {
         const query = await table.selectRecordsAsync();
         total += query.records.length;
-        (query as any).unload();
+        
       }
       setStats(prev => ({ ...prev, totalRecords: total }));
     };
@@ -98,9 +97,6 @@ function ArchiveBaseApp() {
   };
 
   const handleDeleteRule = async (ruleId: string) => {
-    const confirmed = confirm('Are you sure you want to delete this rule?');
-    if (!confirmed) return;
-
     const newRules = rules.filter(r => r.id !== ruleId);
     setRules(newRules);
     await globalConfig.setAsync('archiveRules', newRules as any);
@@ -125,7 +121,7 @@ function ArchiveBaseApp() {
     for (const table of base.tables) {
       const query = await table.selectRecordsAsync();
       total += query.records.length;
-      (query as any).unload();
+      
     }
     setStats(prev => ({ ...prev, totalRecords: total }));
   };
@@ -144,7 +140,6 @@ function ArchiveBaseApp() {
         padding={3}
       >
         <Box display="flex" alignItems="center">
-          <Icon name="download" size={24} fillColor="blue" marginRight={2} />
           <Box>
             <Box fontFamily="system" fontSize={20} fontWeight="600">
               ArchiveBase
@@ -175,7 +170,7 @@ function ArchiveBaseApp() {
             size="small"
             onClick={() => setActiveTab(tab as TabName)}
             marginRight={1}
-            style={activeTab === tab ? { fontWeight: 600 } : undefined}
+            aria-selected={activeTab === tab}
           >
             {label}
           </Button>

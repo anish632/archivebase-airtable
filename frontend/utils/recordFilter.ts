@@ -26,7 +26,7 @@ export async function getRecordsMatchingRule(
       ),
     }));
 
-  (query as any).unload();
+  
   return matchingRecords;
 }
 

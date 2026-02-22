@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Text, Heading, Icon } from '@airtable/blocks/ui';
+import { Box, Text, Heading } from '@airtable/blocks/ui';
 import { ArchiveStats } from '../types';
 
 interface DashboardProps {
@@ -61,17 +61,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ stats, currentTier, monthl
         <StatCard
           title="Total Records"
           value={stats.totalRecords.toLocaleString()}
-          icon="table"
         />
         <StatCard
           title="Archived Records"
           value={stats.archivedRecords.toLocaleString()}
-          icon="download"
         />
         <StatCard
           title="Storage Saved"
           value={`${stats.recordsSaved.toLocaleString()} records`}
-          icon="check"
         />
         <StatCard
           title="Last Archive"
@@ -79,7 +76,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ stats, currentTier, monthl
             ? new Date(stats.lastArchiveDate).toLocaleDateString()
             : 'Never'
           }
-          icon="calendar"
         />
       </Box>
     </Box>
@@ -89,10 +85,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ stats, currentTier, monthl
 interface StatCardProps {
   title: string;
   value: string;
-  icon: string;
 }
 
-const StatCard: React.FC<StatCardProps> = ({ title, value, icon }) => (
+const StatCard: React.FC<StatCardProps> = ({ title, value }) => (
   <Box 
     width="50%" 
     padding={2}
@@ -104,14 +99,8 @@ const StatCard: React.FC<StatCardProps> = ({ title, value, icon }) => (
       padding={3}
       backgroundColor="white"
     >
-      <Box display="flex" alignItems="center" marginBottom={2}>
-        <Icon name={icon as any} size={16} fillColor="gray" />
-        <Text 
-          size="small" 
-          textColor="light" 
-          fontWeight="strong"
-          marginLeft={2}
-        >
+      <Box marginBottom={2}>
+        <Text size="small" textColor="light" fontWeight="strong">
           {title.toUpperCase()}
         </Text>
       </Box>

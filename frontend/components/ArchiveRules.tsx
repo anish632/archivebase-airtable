@@ -8,7 +8,6 @@ import {
   Input,
   Select,
   Switch,
-  Icon,
 } from '@airtable/blocks/ui';
 import { useBase } from '@airtable/blocks/ui';
 import { ArchiveRule, AgeConfig, StatusConfig } from '../types';
@@ -67,7 +66,6 @@ export const ArchiveRules: React.FC<ArchiveRulesProps> = ({
           flexDirection="column"
           alignItems="center"
         >
-          <Icon name="info" size={32} fillColor="gray" marginBottom={2} />
           <Text textColor="light">
             No archive rules configured. Create your first rule to get started.
           </Text>
@@ -127,7 +125,6 @@ const RuleCard: React.FC<RuleCardProps> = ({ rule, onUpdate, onDelete }) => {
               <Switch
                 value={rule.enabled}
                 onChange={(value) => onUpdate({ enabled: value })}
-                size="small"
                 label=""
               />
             </Box>

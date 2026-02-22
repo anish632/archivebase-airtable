@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Box, Text, Heading, Button, Icon } from '@airtable/blocks/ui';
+import { Box, Text, Heading, Button } from '@airtable/blocks/ui';
 import { createCheckout } from '../utils/api';
 
 interface PricingProps {
@@ -134,10 +134,7 @@ export const Pricing: React.FC<PricingProps> = ({ currentTier, baseId }) => {
                     alignItems="flex-start"
                     marginBottom={2}
                   >
-                    <Icon name="check" size={16} fillColor="green" />
-                    <Text size="small" marginLeft={2}>
-                      {feature}
-                    </Text>
+                    <Text size="small">✓ {feature}</Text>
                   </Box>
                 ))}
 
@@ -148,10 +145,7 @@ export const Pricing: React.FC<PricingProps> = ({ currentTier, baseId }) => {
                     alignItems="flex-start"
                     marginBottom={2}
                   >
-                    <Icon name="x" size={16} fillColor="gray" />
-                    <Text size="small" textColor="light" marginLeft={2}>
-                      {limitation}
-                    </Text>
+                    <Text size="small" textColor="light">— {limitation}</Text>
                   </Box>
                 ))}
               </Box>

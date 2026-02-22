@@ -7,7 +7,6 @@ import {
   Select,
   FormField,
   ProgressBar,
-  Icon,
 } from '@airtable/blocks/ui';
 import { useBase } from '@airtable/blocks/ui';
 import { ArchiveRule } from '../types';
@@ -61,12 +60,6 @@ export const ArchiveExecutor: React.FC<ArchiveExecutorProps> = ({
 
   const handleArchive = async () => {
     if (!selectedTable || !selectedRuleId) return;
-
-    const confirmed = confirm(
-      `This will archive ${matchingCount} records to CSV and delete them from Airtable. Continue?`
-    );
-
-    if (!confirmed) return;
 
     setIsArchiving(true);
     setProgress(0);
@@ -152,7 +145,6 @@ export const ArchiveExecutor: React.FC<ArchiveExecutorProps> = ({
           flexDirection="column"
           alignItems="center"
         >
-          <Icon name="warning" size={32} fillColor="orange" marginBottom={2} />
           <Text textColor="light">
             No active archive rules. Enable or create a rule first.
           </Text>
@@ -209,13 +201,8 @@ export const ArchiveExecutor: React.FC<ArchiveExecutorProps> = ({
               borderRadius="default"
               backgroundColor="lightGray1"
             >
-              <Box display="flex" alignItems="center" marginBottom={2}>
-                <Icon
-                  name="info"
-                  size={24}
-                  fillColor={matchingCount > 0 ? 'blue' : 'gray'}
-                />
-                <Heading size="small" marginLeft={2}>
+              <Box marginBottom={2}>
+                <Heading size="small">
                   Scan Results
                 </Heading>
               </Box>
