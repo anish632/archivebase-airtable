@@ -77,7 +77,7 @@ export async function POST(req: NextRequest) {
 
       case 'invoice.payment_succeeded': {
         const invoice = event.data.object as Stripe.Invoice;
-        const subscriptionId = invoice.subscription as string;
+        const subscriptionId = (invoice as any).subscription as string;
 
         if (subscriptionId) {
           // Update subscription status to active
@@ -89,7 +89,7 @@ export async function POST(req: NextRequest) {
 
       case 'invoice.payment_failed': {
         const invoice = event.data.object as Stripe.Invoice;
-        const subscriptionId = invoice.subscription as string;
+        const subscriptionId = (invoice as any).subscription as string;
 
         if (subscriptionId) {
           console.log('Payment failed for subscription:', subscriptionId);
@@ -106,9 +106,4 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// Disable body parsing for webhook
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
+// Next.js App Router doesn't need bodyParser config — raw body is available via req.text()
