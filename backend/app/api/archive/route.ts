@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import { corsResponse, jsonResponse } from '@/lib/cors';
 import { requireAuth } from '@/lib/auth';
 import { getSubscription, logArchive, incrementArchiveCount, getArchiveHistory } from '@/lib/storage';
+import { trackEvent } from '@/lib/db';
 
 const FREE_MONTHLY_LIMIT = 500;
 
@@ -20,11 +21,24 @@ export async function POST(req: NextRequest) {
       return jsonResponse({ success: false, error: 'Missing baseId or recordCount' }, 400);
     }
 
+    // Track archive started
+    await trackEvent({
+      baseId,
+      eventType: 'archive_started',
+      eventData: { tableId, recordCount, ruleId, ruleName },
+    });
+
     // Check subscription limits
     const sub = getSubscription(baseId);
     if (sub.tier === 'free') {
       const remaining = FREE_MONTHLY_LIMIT - sub.monthlyArchiveCount;
       if (recordCount > remaining) {
+        await trackEvent({
+          baseId,
+          eventType: 'archive_failed',
+          eventData: { tableId, recordCount, ruleId, reason: 'quota_exceeded' },
+        });
+        
         return jsonResponse({
           success: false,
           error: `Free plan limit: ${remaining} records remaining this month. Upgrade to Pro for unlimited.`,
@@ -38,9 +52,27 @@ export async function POST(req: NextRequest) {
     logArchive(baseId, { archiveId, tableId, recordCount, ruleId });
     incrementArchiveCount(baseId, recordCount);
 
+    // Track archive completed
+    await trackEvent({
+      baseId,
+      eventType: 'archive_completed',
+      eventData: { archiveId, tableId, recordCount, ruleId, ruleName },
+    });
+
     return jsonResponse({ success: true, archiveId });
   } catch (error) {
     console.error('Archive error:', error);
+    
+    // Track archive failed
+    try {
+      const { baseId, tableId, recordCount, ruleId } = await req.json();
+      await trackEvent({
+        baseId,
+        eventType: 'archive_failed',
+        eventData: { tableId, recordCount, ruleId, error: String(error) },
+      });
+    } catch {}
+    
     return jsonResponse({ success: false, error: 'Internal server error' }, 500);
   }
 }
