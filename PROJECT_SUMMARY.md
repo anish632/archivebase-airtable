@@ -146,7 +146,7 @@ archivebase-airtable/
 
 ## 📊 Market Positioning
 
-**Problem**: 54% of Airtable users report performance issues above 100K records
+**Problem**: Airtable bases slow down significantly as record counts grow beyond 50-100K, a frequent complaint in the Airtable community
 
 **Current Solutions**: 
 - Manual base duplication (tedious, error-prone)
